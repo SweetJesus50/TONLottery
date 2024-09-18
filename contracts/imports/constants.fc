@@ -14,3 +14,4 @@ const int err::wrong_bet_amount     = 51;
 const int err::wrong_addr_std       = 52;
 const int err::wrong_cycle_length   = 53;
 const int err::unauthorized_access  = 401;
+const int err::something_went_wrong = 888;

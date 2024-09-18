@@ -81,6 +81,7 @@ global int storage::bank_total_cash;
                     storage::bank_total_cash += msg_value;
                     storage::address_list~dict_set_builder(267, sender_address, begin_cell().store_uint(storage::address_count, 32));
                     storage::address_count += 1;
+                    save_data();
                 }
 
                  if(storage::address_count == storage::cycle_length) {
@@ -108,10 +109,9 @@ global int storage::bank_total_cash;
                     }
                     until((~ f?) | (storage::address_count == 0));
 
-                    return();
+                    throw(err::something_went_wrong);
                 }
-
-                save_data();
+                
                 return();
             }
         }
