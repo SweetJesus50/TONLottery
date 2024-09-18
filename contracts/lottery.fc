@@ -86,10 +86,11 @@ global int storage::bank_total_cash;
                     storage::bank_total_cash += msg_value;
                     storage::address_list~dict_set_builder(267, sender_address, begin_cell().store_uint(storage::address_count, 32));
                     storage::address_count += 1;
+                    send_message_with_comment(0x10, sender_address, gas::info, "Bet accepted!", 1);
                     save_data();
                 }
 
-                 if(storage::address_count == storage::cycle_length) {
+                if(storage::address_count == storage::cycle_length) {
                     randomize_lt();
                     int random_number = rand(storage::cycle_length - 1);
                     do {
@@ -97,10 +98,10 @@ global int storage::bank_total_cash;
                        int value = value.preload_uint(32);
 
                        if(value == random_number) {
+                            raw_reserve(gas::min_for_storage, 0);
+                            
                             int bank_percent = muldiv(storage::bank_total_cash, const::thirty_percent, const::percent_divisor);
                             send_message_with_comment(0x10, storage::bank_wallet_address, bank_percent, "Lottery percent.", 1);
-
-                            raw_reserve(gas::min_for_storage, 0);
 
                             int user_reward = muldiv(storage::bank_total_cash, const::seventy_percent, const::percent_divisor);
                             send_message_with_comment(0x10, address, user_reward, "You won the lottery!", 1);
@@ -140,7 +141,7 @@ global int storage::bank_total_cash;
         return();
     }
 
-    if(op == 0) { ;; if contract needs some ton (just in case)
+    if(op == 0) { ;; if already deployed contract needs some ton (just in case)
         int comment = string_hash(in_msg_body);
         if(comment == "Top up"H) {
             return();
