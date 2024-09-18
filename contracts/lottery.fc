@@ -135,9 +135,16 @@ global int storage::bank_total_cash;
     ;; Admin only
     throw_unless(err::unauthorized_access, equal_slices(sender_address, storage::admin_address));
 
-    if(op == op::deploy) { ;; just accept coins on deploy
+    if((op == op::deploy) & (init? == false)) { ;; just accept coins on deploy
         throw_unless(err::wrong_deploy_amount, msg_value >= gas::deploy_value);
         return();
+    }
+
+    if(op == 0) { ;; if contract needs some ton (just in case)
+        int comment = string_hash(in_msg_body);
+        if(comment == "Top up"H) {
+            return();
+        }
     }
 
     if(op == op::change_bet) {
