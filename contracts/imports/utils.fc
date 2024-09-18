@@ -134,6 +134,19 @@ builder store_number10(builder b, int x) asm """
   REPEAT:<{ 8 STU }>                                          // ..rrr.. b i
 """;
 
+builder build_exit_code(builder b, int code) {
+    if(code == 50) {
+        return b.store_slice("You cannot bet twice!");
+    }
+    if(code == 51) {
+        return b.store_slice("Invalid bet amount!");
+    }
+    if(code == 888) {
+        return b.store_slice("Unknown error!");
+    }
+    return b.store_number10(code);
+}
+
 
 builder store_str_float(builder b, int number, int ten_pow_decimals) {
     (int int_part, int dec_part) = divmod(number, ten_pow_decimals);
