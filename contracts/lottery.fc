@@ -22,7 +22,7 @@
 #include "imports/op-codes.fc";
 #include "imports/constants.fc";
 
-global int init?;
+global int started?;
 global slice storage::admin_address;
 global slice storage::bank_wallet_address;
 global cell storage::address_list;
@@ -34,7 +34,7 @@ global int storage::bank_total_cash;
 () load_data() impure inline {                              ;; 1 + 267 + 267 + 32 + 124 + 32 + 124 = 847b
     var ds = get_data().begin_parse();
 
-    init? = ds~load_int(1);
+    started? = ds~load_int(1);
     storage::admin_address = ds~load_msg_addr();    
     storage::bank_wallet_address = ds~load_msg_addr();
     storage::address_list = ds~load_dict();
@@ -47,7 +47,7 @@ global int storage::bank_total_cash;
 () save_data() impure inline {
     set_data(
         begin_cell()
-            .store_int(init?, 1)
+            .store_int(started?, 1)
             .store_slice(storage::admin_address)
             .store_slice(storage::bank_wallet_address)
             .store_dict(storage::address_list)
@@ -81,7 +81,7 @@ global int storage::bank_total_cash;
             }
             else {
                 if(storage::address_count < storage::cycle_length) {
-                    init? = true;
+                    started? = true;
                     force_same_workchain(sender_address);
                     storage::bank_total_cash += msg_value;
                     storage::address_list~dict_set_builder(267, sender_address, begin_cell().store_uint(storage::address_count, 32));
@@ -107,7 +107,7 @@ global int storage::bank_total_cash;
 
                             storage::address_count = 0;
                             storage::address_list = new_dict(); ;; guarantee that address list is empty for sure
-                            init? = false;
+                            started? = false;
                             
                             save_data();
                             return();
@@ -135,7 +135,7 @@ global int storage::bank_total_cash;
     ;; Admin only
     throw_unless(err::unauthorized_access, equal_slices(sender_address, storage::admin_address));
 
-    if((op == op::deploy) & (init? == false)) { ;; just accept coins on deploy
+    if((op == op::deploy) & (started? == false)) { ;; just accept coins on deploy
         throw_unless(err::wrong_deploy_amount, msg_value >= gas::deploy_value);
         return();
     }
@@ -148,7 +148,7 @@ global int storage::bank_total_cash;
     }
 
     if(op == op::change_bet) {
-        throw_if(err::lottery_started, init?);
+        throw_if(err::lottery_started, started?);
 
         int new_bet = in_msg_body~load_coins();
 
@@ -171,7 +171,7 @@ global int storage::bank_total_cash;
     }
 
     if(op == op::change_cycle_length) {
-        throw_if(err::lottery_started, init?);
+        throw_if(err::lottery_started, started?);
 
         int new_cycle_length = in_msg_body~load_uint(32);
 
@@ -235,4 +235,9 @@ global int storage::bank_total_cash;
         storage::address_count,
         storage::bank_total_cash
     );
+}
+
+int get_lottery_status() method_id { ;; 0 = lottery not started ;; -1 = lottery started
+    load_data();
+    return started?;
 }
