@@ -1,0 +1,16 @@
+const int const::thirty_percent     = 300000000;
+const int const::seventy_percent    = 700000000;
+const int const::percent_divisor    = 1000000000;
+const slice const::zero_address     = "UQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAJKZ"a;
+
+
+const int gas::min_for_storage      = 50000000;
+const int gas::jetton_transfer      = 55000000;
+const int gas::nft_transfer         = 55000000;
+
+const int err::out_of_gas           = 13;
+const int err::user_already_in_list = 50;
+const int err::wrong_bet_amount     = 51;
+const int err::wrong_addr_std       = 52;
+const int err::wrong_cycle_length   = 53;
+const int err::unauthorized_access  = 401;

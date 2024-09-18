@@ -1,0 +1,8 @@
+const int op::deploy                        = 0xfe0f6f57;
+const int op::change_bet                    = 0x367482d2;
+const int op::change_bank_wallet_address    = 0xf06c0892;
+const int op::change_cycle_length           = 0xd5eab682;
+const int op::withdraw_jettons              = 0xba2c493a;
+const int op::withdraw_nft                  = 0x683da743;
+
+const int unknown_operation                 = 0xffff;
