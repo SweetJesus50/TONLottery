@@ -1,34 +1,14 @@
 slice null_addr() asm "b{00} PUSHSLICE";
 
-const int op::excesses = 0xd53276db;
-const int op::transfer_jetton = 0x0f8a7ea5;
-const int op::transfer_nft = 0x5fcc3d14;
+const int op::transfer_jetton   = 0x0f8a7ea5;
+const int op::transfer_nft      = 0x5fcc3d14;
 
-const int WORKCHAIN = 0;
+const int WORKCHAIN             = 0;
 
-() send_excess(slice to_address, int query_id, int value, int sending_mode) impure inline {
-    cell msg = begin_cell()
-                    .store_uint(0x18, 6)
-                    .store_slice(to_address)
-                    .store_coins(value)
-                    .store_uint(0, 1 + 4 + 4 + 64 + 32 + 1 + 1)
-                    .store_uint(op::excesses, 32)
-                    .store_uint(query_id, 64)
-                    .end_cell();
-    send_raw_message(msg, sending_mode);
+() force_same_workchain(slice addr) impure inline {
+    (int wc, _) = parse_std_addr(addr);
+    throw_unless(333, wc == WORKCHAIN);
 }
-
-(int) send_builder_message(slice to_address, int value, builder payload, int sending_mode) impure inline_ref {
-    cell msg = begin_cell()
-                    .store_uint(0x18, 6)
-                    .store_slice(to_address)
-                    .store_coins(value)
-                    .store_uint(0, 1 + 4 + 4 + 64 + 32 + 1 + 1)
-                    .store_builder(payload)
-                .end_cell();
-    return send_message(msg, sending_mode);
-}
-
 
 (int) send_cell_message(slice to_address, int value, cell payload, int sending_mode) impure inline_ref {
     cell msg = begin_cell()
@@ -40,20 +20,6 @@ const int WORKCHAIN = 0;
                 .end_cell();
     return send_message(msg, sending_mode);
 }
-
-
-(int) send_deploy_message(slice to_address, int value, cell state_init, cell payload, int sending_mode) impure inline {
-    cell msg = begin_cell()
-                    .store_uint(0x10, 6)
-                    .store_slice(to_address)
-                    .store_coins(value)
-                    .store_uint(3, 1 + 4 + 4 + 64 + 32 + 1 + 1)
-                    .store_ref(state_init)
-                    .store_maybe_ref(payload)
-                .end_cell();
-    return send_message(msg, sending_mode);
-}
-
 
 (int) send_message_with_comment(int flags,slice to_address, int value, slice comment, int sending_mode) impure inline_ref {
     cell msg = begin_cell()
@@ -113,12 +79,6 @@ const int WORKCHAIN = 0;
     send_raw_message(msg.end_cell(), sending_mode); 
 }
 
-
-() force_same_workchain(slice addr) impure inline {
-    (int wc, _) = parse_std_addr(addr);
-    throw_unless(333, wc == WORKCHAIN);
-}
-
 builder store_number10(builder b, int x) asm """
   ZERO                                                        // b x i=0
   SWAP                                                        // b i=0 x
@@ -135,14 +95,38 @@ builder store_number10(builder b, int x) asm """
 """;
 
 builder build_exit_code(builder b, int code) {
+    if(code == 13) {
+        return b.store_slice("Not enough gas!");
+    }
     if(code == 50) {
         return b.store_slice("You cannot bet twice!");
     }
     if(code == 51) {
         return b.store_slice("Invalid bet amount!");
     }
+    if(code == 52) {
+        return b.store_slice("Wrong address format!");
+    }
+    if(code == 53) {
+        return b.store_slice("Cycle length must be > 0!");
+    }
+    if(code == 54) {
+        return b.store_slice("Wrong deploy amount!");
+    }
+    if(code == 55) {
+        return b.store_slice("Wait until the lottery ends!");
+    }
+    if(code == 56) {
+        return b.store_slice("Bet must be > 0!");
+    }
+    if(code == 401) {
+        return b.store_slice("Forbidden!");
+    }
     if(code == 888) {
         return b.store_slice("Unknown error!");
+    }
+    if(code == 65535) {
+        return b.store_slice("Unknown OP!");
     }
     return b.store_number10(code);
 }
@@ -166,10 +150,4 @@ builder store_str_float(builder b, int number, int ten_pow_decimals) {
     }
 
     return b;
-}
-
-builder store_str_jettons(builder b, int jetton_amount, int one_jetton, slice symbol) {
-    return b.store_str_float(jetton_amount, one_jetton)
-                .store_uint(32, 8)  ;; store " " (space)
-                .store_slice(symbol);
 }

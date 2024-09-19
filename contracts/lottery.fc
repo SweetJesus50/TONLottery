@@ -77,16 +77,16 @@ global int storage::bank_total_cash;
             (_, int found) = storage::address_list.dict_get?(267, sender_address);
             
             if(found) {
-                throw(err::user_already_in_list); ;; throw if address is in the list
+                throw(err::user_already_in_list);
             }
             else {
                 if(storage::address_count < storage::cycle_length) {
                     started? = true;
                     force_same_workchain(sender_address);
-                    storage::bank_total_cash += msg_value;
                     storage::address_list~dict_set_builder(267, sender_address, begin_cell().store_uint(storage::address_count, 32));
                     storage::address_count += 1;
-                    send_message_with_comment(0x10, sender_address, gas::info, "Bet accepted!", 1);
+                    storage::bank_total_cash += msg_value;
+                    send_message_with_comment(0x10, sender_address, gas::info, "✅ Bet accepted!", 1);
                     save_data();
                 }
 
@@ -95,19 +95,20 @@ global int storage::bank_total_cash;
                     int random_number = rand(storage::cycle_length - 1);
                     do {
                        (slice address, slice value, int f?) = storage::address_list~dict::delete_get_min(267);
-                       int value = value.preload_uint(32);
+                       int user_number = value.preload_uint(32);
 
-                       if(value == random_number) {
+                       if(user_number == random_number) {
                             raw_reserve(gas::min_for_storage, 0);
-                            
+
                             int bank_percent = muldiv(storage::bank_total_cash, const::thirty_percent, const::percent_divisor);
-                            send_message_with_comment(0x10, storage::bank_wallet_address, bank_percent, "Lottery percent.", 1);
+                            send_message_with_comment(0x10, storage::bank_wallet_address, bank_percent, "💰 Lottery percent.", 1);
 
                             int user_reward = muldiv(storage::bank_total_cash, const::seventy_percent, const::percent_divisor);
-                            send_message_with_comment(0x10, address, user_reward, "You won the lottery!", 1);
+                            send_message_with_comment(0x10, address, user_reward, "🥳 You won the lottery!", 1);
 
                             storage::address_count = 0;
-                            storage::address_list = new_dict(); ;; guarantee that address list is empty for sure
+                            storage::bank_total_cash = 0;
+                            storage::address_list = new_dict();
                             started? = false;
                             
                             save_data();
@@ -123,7 +124,6 @@ global int storage::bank_total_cash;
                 return();
             }
         }
-
     }
     catch (_, n) {
         send_cell_message(sender_address, 0, begin_cell().store_uint(0, 32).build_exit_code(n).end_cell(), 64);
@@ -131,95 +131,110 @@ global int storage::bank_total_cash;
     }
 
     int op = in_msg_body~load_uint(32);
-    int query_id = in_msg_body~load_uint(64);
+    int query_id = in_msg_body.slice_bits() >= 64 ? in_msg_body~load_uint(64) : 0;
+
 
     ;; Admin only
-    throw_unless(err::unauthorized_access, equal_slices(sender_address, storage::admin_address));
+    try {
+        throw_unless(err::unauthorized_access, equal_slices(sender_address, storage::admin_address));
 
-    if((op == op::deploy) & (started? == false)) { ;; just accept coins on deploy
-        throw_unless(err::wrong_deploy_amount, msg_value >= gas::deploy_value);
-        return();
-    }
-
-    if(op == 0) { ;; if already deployed contract needs some ton (just in case)
-        int comment = string_hash(in_msg_body);
-        if(comment == "Top up"H) {
+        if((op == op::deploy) & (started? == false)) {
+            throw_unless(err::wrong_deploy_amount, msg_value >= gas::deploy_value);
             return();
         }
-    }
 
-    if(op == op::change_bet) {
-        throw_if(err::lottery_started, started?);
+        if(op == 0) { ;; if already deployed contract needs some ton (just in case)
+            int comment = string_hash(in_msg_body);
+            if(comment == "Top up"H) {
+                return();
+            } 
+            else {
+                return();
+            }
+        }
+        if(op == op::change_bet) {
+            throw_unless(err::out_of_gas, msg_value >= gas::admin);
+            throw_if(err::lottery_started, started?);
 
-        int new_bet = in_msg_body~load_coins();
+            int new_bet = in_msg_body~load_coins();
 
-        if(new_bet > 0) {
-            storage::bet_amount = new_bet;
-            save_data();
-            return();
-        } else { throw(err::wrong_bet_amount); }
-    }
+            if(new_bet > 0) {
+                storage::bet_amount = new_bet;
+                save_data();
+                send_cell_message(sender_address, 0, begin_cell().store_uint(0, 32).store_slice("Bet changed to ").store_str_float(new_bet, const::number_divisor).store_slice(" 💎").end_cell(), 64);
+                return();
+            } else { throw(err::wrong_new_bet); }
+        }
 
-    if(op == op::change_bank_wallet_address) {
+        if(op == op::change_cycle_length) {
+            throw_unless(err::out_of_gas, msg_value >= gas::admin);
+            throw_if(err::lottery_started, started?);
+
+            int new_cycle_length = in_msg_body~load_uint(32);
+
+            if(new_cycle_length > 0) {
+                storage::cycle_length = new_cycle_length;
+                save_data();
+                send_cell_message(sender_address, 0, begin_cell().store_uint(0, 32).store_slice("Cycle length changed to ").store_number10(new_cycle_length).store_slice(" !").end_cell(), 64);
+                return();
+            } else { throw(err::wrong_cycle_length); }
+        }
+
+        if(op == op::change_bank_wallet_address) {
+        throw_unless(err::out_of_gas, msg_value >= gas::admin);
         slice new_bank_wallet_address = in_msg_body~load_msg_addr();
         force_same_workchain(new_bank_wallet_address);
         
         if(new_bank_wallet_address.preload_uint(2) == 2) {
             storage::bank_wallet_address = new_bank_wallet_address;
             save_data();
+            send_cell_message(sender_address, 0, begin_cell().store_uint(0, 32).store_slice("Bank wallet address changed!").end_cell(), 64);
             return();
         } else { throw(err::wrong_addr_std); }
     }
 
-    if(op == op::change_cycle_length) {
-        throw_if(err::lottery_started, started?);
+        if(op == op::withdraw_jettons) {
+            throw_unless(err::out_of_gas, msg_value >= gas::jetton_transfer);
 
-        int new_cycle_length = in_msg_body~load_uint(32);
+            slice jetton_wallet_address = in_msg_body~load_msg_addr();
+            int jetton_amount = in_msg_body~load_coins();
 
-        if(new_cycle_length > 0) {
-            storage::cycle_length = new_cycle_length;
-            save_data();
+            if((in_msg_body.slice_bits() > 0) & (in_msg_body.slice_bits() == 267)) {
+                slice to_address = in_msg_body~load_msg_addr();
+                force_same_workchain(to_address);
+                send_jettons(query_id, jetton_amount, to_address, sender_address, jetton_wallet_address, 0, 64, 1, null());
+            }
+            else {
+                send_jettons(query_id, jetton_amount, const::zero_address, sender_address, jetton_wallet_address, 0, 64, 1, null());
+            }
+
             return();
-        } else { throw(err::wrong_cycle_length); }
+        }
+
+        if(op == op::withdraw_nft) {
+            throw_unless(err::out_of_gas, msg_value >= gas::nft_transfer);
+
+            slice nft_address = in_msg_body~load_msg_addr();
+
+            if((in_msg_body.slice_bits() > 0) & (in_msg_body.slice_bits() == 267)) {
+                slice to_address = in_msg_body~load_msg_addr();
+                force_same_workchain(to_address);
+
+                send_nft(query_id, nft_address, to_address, 0, 64);
+            }
+            else {
+                send_nft(query_id, nft_address, const::zero_address, 0, 64);
+            }
+            
+            return();
+        }
+
+        throw(unknown_operation);
     }
-
-    if(op == op::withdraw_jettons) {
-        throw_unless(err::out_of_gas, msg_value >= gas::jetton_transfer);
-
-        slice jetton_wallet_address = in_msg_body~load_msg_addr();
-        int jetton_amount = in_msg_body~load_coins();
-
-        if((in_msg_body.slice_bits() > 0) & (in_msg_body.slice_bits() == 267)) {
-            slice to_address = in_msg_body~load_msg_addr();
-            force_same_workchain(to_address);
-            send_jettons(query_id, jetton_amount, to_address, sender_address, jetton_wallet_address, 0, 64, 1, null());
-        }
-        else {
-            send_jettons(query_id, jetton_amount, const::zero_address, sender_address, jetton_wallet_address, 0, 64, 1, null());
-        }
-
+    catch (_, n) {
+        send_cell_message(sender_address, 0, begin_cell().store_uint(0, 32).build_exit_code(n).end_cell(), 64);
         return();
-    }
-
-    if(op == op::withdraw_nft) {
-        throw_unless(err::out_of_gas, msg_value >= gas::nft_transfer);
-
-        slice nft_address = in_msg_body~load_msg_addr();
-
-        if((in_msg_body.slice_bits() > 0) & (in_msg_body.slice_bits() == 267)) {
-            slice to_address = in_msg_body~load_msg_addr();
-            force_same_workchain(to_address);
-
-            send_nft(query_id, nft_address, to_address, 0, 64);
-        }
-        else {
-            send_nft(query_id, nft_address, const::zero_address, 0, 64);
-        }
-        
-        return();
-    }
-    
-    throw(unknown_operation);
+    }    
 }
 
 ;; GET
@@ -240,5 +255,6 @@ global int storage::bank_total_cash;
 
 int get_lottery_status() method_id { ;; 0 = lottery not started ;; -1 = lottery started
     load_data();
+
     return started?;
 }

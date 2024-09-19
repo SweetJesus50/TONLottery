@@ -1,3 +1,4 @@
+{- OP CODES -}
 const int op::deploy                        = 0xfe0f6f57;
 const int op::change_bet                    = 0x367482d2;
 const int op::change_bank_wallet_address    = 0xf06c0892;

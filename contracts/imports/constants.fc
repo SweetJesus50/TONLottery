@@ -1,14 +1,20 @@
+{- MISC -}
 const int const::thirty_percent     = 300000000;
 const int const::seventy_percent    = 700000000;
 const int const::percent_divisor    = 1000000000;
+const int const::number_divisor     = 1000000000;
+
 const slice const::zero_address     = "UQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAJKZ"a;
 
+{- GAS -}
 const int gas::info                 = 1000000;
+const int gas::admin                = 10000000;
 const int gas::min_for_storage      = 50000000;
 const int gas::jetton_transfer      = 55000000;
 const int gas::nft_transfer         = 55000000;
 const int gas::deploy_value         = 1000000000;
 
+{- EXIT CODES -}
 const int err::out_of_gas           = 13;
 const int err::user_already_in_list = 50;
 const int err::wrong_bet_amount     = 51;
@@ -16,5 +22,6 @@ const int err::wrong_addr_std       = 52;
 const int err::wrong_cycle_length   = 53;
 const int err::wrong_deploy_amount  = 54;
 const int err::lottery_started      = 55;
+const int err::wrong_new_bet        = 56;
 const int err::unauthorized_access  = 401;
 const int err::something_went_wrong = 888;
