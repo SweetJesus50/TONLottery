@@ -1,6 +1,6 @@
 # Lottery on TON
 
-Blockchain based smart contract lottery on TON.
+Blockchain based lottery smart contract on TON.
 
 Everything works automatically & safely. The rules are simple — send TON to this smart contract address and win. 70% of the prize goes to winner, 30% of goes as fee to bank address.
 Lottery contract is reusable, i.e. once you deployed it you can use it forever.
