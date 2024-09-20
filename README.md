@@ -1,4 +1,17 @@
-# Lottery
+# Lottery on TON
+
+Blockchain based smart contract lottery on TON.
+
+Everything works automatically & safely. The rules are simple — send TON to this smart contract address and win. 70% of the prize goes to winner, 30% of goes as fee to bank address.
+Lottery contract is reusable, i.e. once you deployed it you can use it forever.
+Supports various customizations, such as:
+- bet amount changing
+- changing the number of transactions in one round
+- changing bank address
+- also has ability to withdraw unexpected Jettons & NFTs.
+
+There are 2 versions of lottery. Lottery w/cooldown and lottery w/o cooldown.
+More information available in [`contracts`](https://github.com/SweetJesus50/TONLottery/tree/master/contracts).
 
 ## Project structure
 
