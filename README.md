@@ -13,6 +13,8 @@ Supports various customizations, such as:
 There are 2 versions of lottery. Lottery w/cooldown and lottery w/o cooldown.
 More information available in [`contracts`](https://github.com/SweetJesus50/TONLottery/tree/master/contracts).
 
+**Try it on [TON Lottery](https://lotteryton.com/)!**
+
 ## Project structure
 
 -   `contracts` - source code of all the smart contracts of the project and their dependencies.
