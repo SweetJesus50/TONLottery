@@ -6,8 +6,8 @@ export async function run(provider: NetworkProvider) {
     const lottery = provider.open(Lottery.createFromConfig({
         adminAddress: provider.sender().address as Address,         // адрес админа (в данном случае будет админ тот, кто отправляет транзакцию на деплой)
         bankWalletAddress: Address.parse(""),                       // адрес банка, куда придет процент (просто скопировать и вставить адрес в кавычки)
-        cycleLength: 5,                                             // количество циклов (транзакций)
-        betAmount: toNano("0.1")                                    // сумма ставки (1,2,3...n)
+        cycleLength: 5,                                             // количество транзакций (ставок) в одном раунде
+        betAmount: toNano("1")                                      // сумма ставки (1,2,3...n)
     }, await compile('Lottery')));
 
     await lottery.sendDeploy(provider.sender(), toNano('1'));       // деплой

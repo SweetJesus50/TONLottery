@@ -8,11 +8,13 @@
 
     Контракт должен игнорировать любые поступления (чтобы не запутаться/не заскамили). Неважно отправят ему нфт, токены, usdt или что-то еще — все, что не равно ставке = для него несуществует
 
+    Кулдаун 3 минуты после завершения лотерии, по истечении которого можно по прежнему делать ставки. (время кулдауна настраивается в контракте)
+
     Особенности:
     1. Настраиваемый в контракте кошелек куда отправляется 30% банка
     2. Возможность легко изменить величину ставки в контракте (чтобы я мог сделать потом такой же контракт, но например со ставкой 5 TON и тогда банк будет 50 TON)
     3. При отправке банка победителю должно быть фиксированное сообщение. (комментарий)
-    4. Комиссии при отправке банка и оставшихся 30% на адрес ХХ должны вычитаться с суммы отправок(а не с свободных средств на контракте)
+    4. Комиссии при отправке банка и оставшихся 30% на адрес ХХ должны вычитаться с суммы отправок ыы(а не с свободных средств на контракте)
 -}
 
 #pragma version >=0.4.0;
@@ -30,8 +32,9 @@ global int storage::cycle_length;
 global int storage::bet_amount;
 global int storage::address_count;
 global int storage::bank_total_cash;
+global int storage::cooldown_time;
 
-() load_data() impure inline {                              ;; 1 + 267 + 267 + 32 + 124 + 32 + 124 = 847b
+() load_data() impure inline {                              ;; 1 + 267 + 267 + 32 + 124 + 32 + 124 + 32 = 879b
     var ds = get_data().begin_parse();
 
     started? = ds~load_int(1);
@@ -41,7 +44,8 @@ global int storage::bank_total_cash;
     storage::cycle_length = ds~load_uint(32);
     storage::bet_amount = ds~load_coins();
     storage::address_count = ds~load_uint(32);
-    storage::bank_total_cash = ds~load_coins();    
+    storage::bank_total_cash = ds~load_coins();
+    storage::cooldown_time = ds~load_uint(32);    
 }
 
 () save_data() impure inline {
@@ -55,6 +59,7 @@ global int storage::bank_total_cash;
             .store_coins(storage::bet_amount)
             .store_uint(storage::address_count, 32)
             .store_coins(storage::bank_total_cash)
+            .store_uint(storage::cooldown_time, 32)
         .end_cell()
     );
 }
@@ -73,6 +78,7 @@ global int storage::bank_total_cash;
 
     try {
         if(in_msg_body.slice_empty?()) {
+            throw_unless(err::cooldown, now() > storage::cooldown_time);
             throw_unless(err::wrong_bet_amount, msg_value == storage::bet_amount);
             (_, int found) = storage::address_list.dict_get?(267, sender_address);
             
@@ -106,11 +112,13 @@ global int storage::bank_total_cash;
                             int user_reward = muldiv(storage::bank_total_cash, const::seventy_percent, const::percent_divisor);
                             send_message_with_comment(0x10, address, user_reward, "🥳 You won the lottery!", 1);
 
+                            storage::cooldown_time = 0;
                             storage::address_count = 0;
                             storage::bank_total_cash = 0;
                             storage::address_list = new_dict();
                             started? = false;
-                            
+                            storage::cooldown_time += now() + const::thirty_seconds;
+
                             save_data();
                             return();
                        }
@@ -250,6 +258,12 @@ global int storage::bank_total_cash;
         storage::address_count,
         storage::bank_total_cash
     );
+}
+
+int get_cooldown() method_id {
+    load_data();
+
+    return storage::cooldown_time;
 }
 
 int get_lottery_status() method_id { ;; 0 = lottery not started ;; -1 = lottery started

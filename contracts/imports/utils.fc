@@ -119,6 +119,9 @@ builder build_exit_code(builder b, int code) {
     if(code == 56) {
         return b.store_slice("Bet must be > 0!");
     }
+    if(code == 57) {
+        return b.store_slice("Cooldown 3 minutes!");
+    }
     if(code == 401) {
         return b.store_slice("Forbidden!");
     }
