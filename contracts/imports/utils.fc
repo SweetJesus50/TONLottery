@@ -96,25 +96,25 @@ builder store_number10(builder b, int x) asm """
 
 builder build_exit_code(builder b, int code) {
     if(code == 13) {
-        return b.store_slice("Not enough gas!");
+        return b.store_slice("⛽ Out of gas!");
     }
     if(code == 50) {
-        return b.store_slice("You cannot bet twice!");
+        return b.store_slice("🙅‍♂️ You cannot bet twice!");
     }
     if(code == 51) {
-        return b.store_slice("Invalid bet amount!");
+        return b.store_slice("💎 Invalid bet amount!");
     }
     if(code == 52) {
-        return b.store_slice("Wrong address format!");
+        return b.store_slice("Invalid address format!");
     }
     if(code == 53) {
         return b.store_slice("Cycle length must be > 0!");
     }
     if(code == 54) {
-        return b.store_slice("Wrong deploy amount!");
+        return b.store_slice("Invalid deploy amount!");
     }
     if(code == 55) {
-        return b.store_slice("Wait until the lottery ends!");
+        return b.store_slice("⏳ Wait until the lottery ends!");
     }
     if(code == 56) {
         return b.store_slice("Bet must be > 0!");
@@ -123,10 +123,10 @@ builder build_exit_code(builder b, int code) {
         return b.store_slice("Cooldown 3 minutes!");
     }
     if(code == 58) {
-        return b.stoe_slice("🚫");
+        return b.store_slice("🚫");
     }
     if(code == 401) {
-        return b.store_slice("Forbidden!");
+        return b.store_slice("⛔ Forbidden!");
     }
     if(code == 888) {
         return b.store_slice("Unknown error!");

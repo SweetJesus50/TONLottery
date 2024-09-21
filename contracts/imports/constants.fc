@@ -7,6 +7,12 @@ const int const::thirty_seconds     = 180;
 
 const slice const::zero_address     = "UQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAJKZ"a;
 
+ {- MESSAGE NOTIFICATIONS -}
+ const slice notify::bet_accepted   = "✅ Bet accepted!";
+ const slice notify::bank_fee       = "💰 Lottery fee.";
+ const slice notify::winner         = "🥳 You won the lottery!";
+ const slice notify::top_up         = "+💎";
+
 {- GAS -}
 const int gas::info                 = 1000000;
 const int gas::admin                = 10000000;
