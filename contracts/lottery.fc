@@ -145,10 +145,11 @@ global int storage::bank_total_cash;
         if(op == 0) { ;; if already deployed contract needs some ton (just in case)
             int comment = string_hash(in_msg_body);
             if(comment == "Top up"H) {
+                send_message_with_comment(0x10, sender_address, 1000000, "+💎", 1);
                 return();
             } 
             else {
-                return();
+                throw(err::unknown_action);
             }
         }
         if(op == op::change_bet) {

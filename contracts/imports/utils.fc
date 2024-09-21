@@ -122,6 +122,9 @@ builder build_exit_code(builder b, int code) {
     if(code == 57) {
         return b.store_slice("Cooldown 3 minutes!");
     }
+    if(code == 58) {
+        return b.stoe_slice("🚫");
+    }
     if(code == 401) {
         return b.store_slice("Forbidden!");
     }

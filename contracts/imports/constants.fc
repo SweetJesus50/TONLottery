@@ -25,5 +25,6 @@ const int err::wrong_deploy_amount  = 54;
 const int err::lottery_started      = 55;
 const int err::wrong_new_bet        = 56;
 const int err::cooldown             = 57;
+const int err::unknown_action       = 58;
 const int err::unauthorized_access  = 401;
 const int err::something_went_wrong = 888;
